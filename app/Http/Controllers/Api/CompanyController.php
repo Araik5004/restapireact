@@ -4,53 +4,67 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use GuzzleHttp\Client;
 
-class CompanyController extends Controller
-{
+class CompanyController extends Controller {
 
-    public function getCompanyByInn(Request $request)
-    {
-
-        $app_url = env("APP_URL");
+    public function getCompanyByInn(Request $request) {
         $inn = $request->get('inn', false);
 
         if (!$inn) {
             return response()->json(['status' => false], 404);
         }
 
-        $client = new Client(
-            [
-                'timeout' => 2.0
-            ]
-        );
+        self::http($inn)
+                ->then(function ($response) {
+                    echo $response;
+                })
+                ->otherwise(function (\Exception $exception) {
+                    echo $exception->getMessage();
+                });
+    }
 
-        $data_urls = [
-            1 => $app_url . '/api/services/first/' . $inn,
-            2 => $app_url . '/api/services/second/' . $inn,
-            3 => $app_url . '/api/services/third/' . $inn,
+    public static function http($inn) {
+
+        $deferred = new \React\Promise\Deferred();
+        $loop = \React\EventLoop\Factory::create();
+
+        $client = new \React\Http\Browser($loop);
+
+
+        $app_url = env("APP_URL");
+
+        $request = [
+            $app_url . '/api/services/first/' . $inn,
+            $app_url . '/api/services/second/' . $inn,
+            $app_url . '/api/services/third/' . $inn,
         ];
 
 
-        $data = ['status' => false];
-        foreach ($data_urls as $url) {
-            try {
-                $response = $client->get($url);
-                if ($response->getStatusCode() == 200) {
-                    $data_response = $response->getBody()->getContents();
-                    $res = json_decode($data_response, true);
-                    if (isset($res['status']) && $res['status'] === true) {
-                        $data = $res;
-                        break;
-                    }
-                }
-            } catch (\GuzzleHttp\Exception\GuzzleException $e) {
-                logs()->info("Error Message : " . $e->getMessage() . "; Error Code : " . $e->getCode());
-            }
+        $promises = [];
+        foreach ($request as $url) {
+            $promises[] = $client->withTimeout(1.0)->get($url);
         }
 
 
-        return response()->json($data, 200);
+        \React\Promise\any($promises)
+                ->then(function (\Psr\Http\Message\ResponseInterface $response) use ($promises) {
+                    foreach ($promises as $promise) {
+                        $promise->cancel();
+                    }
+                    echo $response->getBody();
+                }
+                )
+                ->otherwise(function (\React\Promise\Exception\CompositeException $error) {
+
+                    foreach ($error->getThrowables() as $err_msh) {
+                        echo $err_msh->getMessage() . PHP_EOL;
+                    }
+                })
+        ;
+
+        $loop->run();
+
+        return $deferred->promise();
     }
 
 }

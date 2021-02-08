@@ -55,10 +55,10 @@ class ServiceController extends Controller
             'Inn'    => $inn,
             'status' => true,
             'info'   => [
-                'company_name' => 'company_name_' . Str::random(5),
-                'company_kpp'  => 'company_kpp_' . Str::random(5),
+                'company_name'    => 'company_name_' . Str::random(5),
+                'company_kpp'     => 'company_kpp_' . Str::random(5),
                 'company_address' => 'company_address_' . Str::random(5),
-                'company_inn'  => $inn
+                'company_inn'     => $inn
             ],
             'method' => __FUNCTION__
         ];
@@ -76,10 +76,10 @@ class ServiceController extends Controller
             'Inn'    => $inn,
             'status' => true,
             'info'   => [
-                'company_name' => 'company_name_' . Str::random(5),
-                'company_kpp'  => 'company_kpp_' . Str::random(5),
+                'company_name'    => 'company_name_' . Str::random(5),
+                'company_kpp'     => 'company_kpp_' . Str::random(5),
                 'company_address' => 'company_address_' . Str::random(5),
-                'company_inn'  => $inn
+                'company_inn'     => $inn
             ],
             'method' => __FUNCTION__
         ];
